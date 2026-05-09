@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../lib/supabase";
 import { TEMPLATES, FORMAT_OPTIONS, CONTEXT_OPTIONS } from "../lib/constants";
 import TestCaseOutput from "../components/TestCaseOutput";
+import PaywallModal from "../components/PaywallModal";
 import { useGenerations } from "../hooks/useGenerations";
 import type { Generation, OutputFormat, AppContext } from "../lib/types";
 
@@ -47,6 +48,7 @@ export default function Generator() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Generation | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const creditsLeft = creditsRemaining ?? Math.max(0, (profile?.credits_limit ?? 10) - (profile?.credits_used ?? 0));
   const hasCredits = creditsLeft > 0;
@@ -57,7 +59,7 @@ export default function Generator() {
       return;
     }
     if (!hasCredits) {
-      setError("No te quedan créditos. Hacé upgrade para obtener más.");
+      setShowPaywall(true);
       return;
     }
 
@@ -106,6 +108,12 @@ export default function Generator() {
 
   return (
     <div className="min-h-screen bg-slate-900">
+      {showPaywall && (
+        <PaywallModal
+          creditsUsed={profile?.credits_used ?? 0}
+          onClose={() => setShowPaywall(false)}
+        />
+      )}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-100">Generador de Test Cases</h1>
@@ -221,13 +229,22 @@ Ejemplo: As a user, I want to login with email and password so that I can access
             {/* Generate button */}
             <button
               onClick={handleGenerate}
-              disabled={loading || !hasCredits || !userStory.trim()}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold transition-all shadow-md shadow-sky-500/25 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              disabled={loading || !userStory.trim()}
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all text-sm disabled:cursor-not-allowed ${
+                !hasCredits
+                  ? "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                  : "bg-sky-500 hover:bg-sky-400 text-white shadow-md shadow-sky-500/25 disabled:opacity-50"
+              }`}
             >
               {loading ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   Generando con IA...
+                </>
+              ) : !hasCredits ? (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Sin créditos — Upgrade
                 </>
               ) : (
                 <>
@@ -245,7 +262,9 @@ Ejemplo: As a user, I want to login with email and password so that I can access
                   {creditsLeft !== 1 ? "s" : ""} restante{creditsLeft !== 1 ? "s" : ""} este mes
                 </>
               ) : (
-                <span className="text-red-400">Sin créditos disponibles — <a href="/pricing" className="underline">upgrade</a></span>
+                <button onClick={() => setShowPaywall(true)} className="text-sky-400 hover:text-sky-300 underline">
+                  Ver planes de upgrade →
+                </button>
               )}
             </p>
           </div>

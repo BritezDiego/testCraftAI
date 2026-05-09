@@ -1,15 +1,49 @@
-import { Check, Zap } from "lucide-react";
+import { useState } from "react";
+import { Check, Zap, ExternalLink, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { PricingPlan } from "../lib/types";
+import { useAuth } from "../hooks/useAuth";
+import { redirectToCheckout, redirectToCustomerPortal } from "../lib/lemonsqueezy";
 
 interface Props {
   plan: PricingPlan;
-  currentPlan?: string;
 }
 
-export default function PricingCard({ plan, currentPlan }: Props) {
+export default function PricingCard({ plan }: Props) {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  const [loading, setLoading] = useState(false);
+
+  const currentPlan = profile?.plan ?? "free";
   const isCurrent = currentPlan === plan.id;
+  const isPaid = plan.id === "pro" || plan.id === "team";
+
+  async function handleClick() {
+    if (isCurrent) return;
+
+    if (!user || !profile) {
+      navigate(`/register?plan=${plan.id}`);
+      return;
+    }
+
+    if (plan.id === "free") return;
+
+    setLoading(true);
+    redirectToCheckout(plan.id as "pro" | "team", { id: user.id, email: profile.email });
+  }
+
+  function handleManage() {
+    if (profile?.ls_customer_id) {
+      redirectToCustomerPortal(profile.ls_customer_id);
+    }
+  }
+
+  const buttonLabel = () => {
+    if (isCurrent) return "Plan actual";
+    if (!user) return plan.cta;
+    if (loading) return "Redirigiendo...";
+    return plan.cta;
+  };
 
   return (
     <div
@@ -56,18 +90,29 @@ export default function PricingCard({ plan, currentPlan }: Props) {
       </ul>
 
       <button
-        onClick={() => !isCurrent && navigate(currentPlan ? "/pricing" : "/register")}
-        disabled={isCurrent}
-        className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+        onClick={handleClick}
+        disabled={isCurrent || loading}
+        className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
           isCurrent
             ? "bg-slate-700 text-slate-500 cursor-default"
             : plan.highlighted
             ? "bg-sky-500 hover:bg-sky-400 text-white shadow-md shadow-sky-500/25"
             : "bg-slate-700 hover:bg-slate-600 text-slate-200"
-        }`}
+        } disabled:opacity-60`}
       >
-        {isCurrent ? "Plan actual" : plan.cta}
+        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {buttonLabel()}
       </button>
+
+      {isCurrent && isPaid && profile?.ls_customer_id && (
+        <button
+          onClick={handleManage}
+          className="w-full flex items-center justify-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          <ExternalLink className="h-3 w-3" />
+          Gestionar suscripción
+        </button>
+      )}
     </div>
   );
 }

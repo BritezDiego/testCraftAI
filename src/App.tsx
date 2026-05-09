@@ -9,6 +9,7 @@ import Generator from "./pages/Generator";
 import History from "./pages/History";
 import GenerationDetail from "./pages/GenerationDetail";
 import Pricing from "./pages/Pricing";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
 
         {/* Routes with shared layout (navbar) */}
         <Route element={<Layout />}>

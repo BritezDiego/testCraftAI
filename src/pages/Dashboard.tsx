@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Zap, Plus, TrendingUp, Clock, FileText, ArrowRight } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Zap, Plus, TrendingUp, Clock, FileText, ArrowRight, ExternalLink, CheckCircle, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useGenerations } from "../hooks/useGenerations";
 import CreditsBadge from "../components/CreditsBadge";
+import SubscriptionBanner from "../components/SubscriptionBanner";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { redirectToCheckout, redirectToCustomerPortal } from "../lib/lemonsqueezy";
 import type { Generation } from "../lib/types";
 
 function getGreeting(): string {
@@ -21,12 +23,43 @@ const FORMAT_COLORS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const { fetchRecent } = useGenerations(profile?.id);
   const [recent, setRecent] = useState<Generation[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const paymentStatus = searchParams.get("payment");
+  const paymentPlan = searchParams.get("plan");
+  const [toast, setToast] = useState<{ type: "success" | "cancel"; message: string } | null>(null);
 
   const displayName = profile?.full_name?.split(" ")[0] || "QA";
+  const totalGenerations = profile?.credits_used ?? 0;
+  const estimatedTests = totalGenerations * 10;
+  const timeSaved = totalGenerations * 25;
+
+  // Handle payment return params
+  useEffect(() => {
+    if (paymentStatus === "success") {
+      const planLabel = paymentPlan === "team" ? "Team" : "Pro";
+      setToast({ type: "success", message: `¡Bienvenido al plan ${planLabel}! Tus créditos fueron actualizados.` });
+      refreshProfile();
+      // Clean URL
+      navigate("/dashboard", { replace: true });
+    } else if (paymentStatus === "cancel") {
+      setToast({ type: "cancel", message: "El pago fue cancelado. Podés intentar de nuevo cuando quieras." });
+      navigate("/dashboard", { replace: true });
+    }
+  }, [paymentStatus, paymentPlan, navigate, refreshProfile]);
+
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
 
   useEffect(() => {
     async function load() {
@@ -37,12 +70,33 @@ export default function Dashboard() {
     if (profile?.id) load();
   }, [profile?.id, fetchRecent]);
 
-  const totalGenerations = profile?.credits_used ?? 0;
-  const estimatedTests = totalGenerations * 10;
-  const timeSaved = totalGenerations * 25;
+  function handleUpgrade() {
+    if (!profile) return;
+    setUpgradeLoading(true);
+    redirectToCheckout("pro", { id: profile.id, email: profile.email });
+  }
+
+  function handleManage() {
+    if (profile?.ls_customer_id) redirectToCustomerPortal(profile.ls_customer_id);
+  }
 
   return (
     <div className="min-h-screen bg-slate-900">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl max-w-sm ${
+          toast.type === "success"
+            ? "bg-emerald-900/90 border-emerald-500/40 text-emerald-100"
+            : "bg-slate-800 border-slate-600 text-slate-300"
+        }`}>
+          {toast.type === "success" && <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />}
+          <p className="text-sm flex-1">{toast.message}</p>
+          <button onClick={() => setToast(null)} className="text-current opacity-50 hover:opacity-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -62,6 +116,13 @@ export default function Dashboard() {
             Nueva generación
           </Link>
         </div>
+
+        {/* Subscription alerts */}
+        {profile && (profile.subscription_status === "cancelled" || profile.subscription_status === "past_due") && (
+          <div className="mb-6">
+            <SubscriptionBanner profile={profile} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left column */}
@@ -138,18 +199,50 @@ export default function Dashboard() {
           <div className="space-y-4">
             <CreditsBadge profile={profile} />
 
+            {/* Free upgrade banner */}
             {profile?.plan === "free" && (
               <div className="rounded-xl bg-gradient-to-br from-sky-900/40 to-violet-900/40 border border-sky-500/30 p-4">
                 <h3 className="font-semibold text-slate-100 text-sm mb-1.5">Upgrade a Pro</h3>
                 <p className="text-xs text-slate-400 mb-3">
                   200 generaciones/mes, todos los contextos, historial ilimitado.
                 </p>
-                <Link
-                  to="/pricing"
-                  className="block w-full text-center py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold transition-all"
+                <button
+                  onClick={handleUpgrade}
+                  disabled={upgradeLoading}
+                  className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold transition-all disabled:opacity-50"
                 >
-                  Ver planes
-                </Link>
+                  {upgradeLoading && <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+                  Upgrade a Pro — $19/mes
+                </button>
+              </div>
+            )}
+
+            {/* Paid plan — manage subscription */}
+            {profile && profile.plan !== "free" && profile.ls_customer_id && (
+              <div className="rounded-xl bg-slate-800 border border-slate-700 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-slate-200">Tu suscripción</h3>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
+                    profile.plan === "team"
+                      ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                      : "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                  }`}>
+                    {profile.plan}
+                  </span>
+                </div>
+                {profile.current_period_end && (
+                  <p className="text-xs text-slate-500 mb-3">
+                    Próxima renovación:{" "}
+                    {new Date(profile.current_period_end).toLocaleDateString("es-AR", { day: "numeric", month: "long" })}
+                  </p>
+                )}
+                <button
+                  onClick={handleManage}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 rounded-lg py-2 transition-all"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Gestionar suscripción
+                </button>
               </div>
             )}
 

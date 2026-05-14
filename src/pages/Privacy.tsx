@@ -56,12 +56,12 @@ export default function Privacy() {
           <Section title="3. How We Use Your Information">
             <p>We use your data to:</p>
             <ul className="mt-3 space-y-1.5">
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span>Provide and operate the Service.</li>
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span>Generate test cases using AI based on your inputs.</li>
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span>Manage your subscription and billing.</li>
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span>Send transactional emails (account confirmation, billing notifications).</li>
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span>Improve the Service and fix bugs.</li>
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span>Comply with legal obligations.</li>
+              <li className="flex gap-2"><span className="text-sky-400 shrink-0">-</span>Provide and operate the Service.</li>
+              <li className="flex gap-2"><span className="text-sky-400 shrink-0">-</span>Generate test cases using AI based on your inputs.</li>
+              <li className="flex gap-2"><span className="text-sky-400 shrink-0">-</span>Manage your subscription and billing.</li>
+              <li className="flex gap-2"><span className="text-sky-400 shrink-0">-</span>Send transactional emails (account confirmation, billing notifications).</li>
+              <li className="flex gap-2"><span className="text-sky-400 shrink-0">-</span>Improve the Service and fix bugs.</li>
+              <li className="flex gap-2"><span className="text-sky-400 shrink-0">-</span>Comply with legal obligations.</li>
             </ul>
             <p className="mt-3">
               We do not sell your personal data to third parties. We do not use your user stories to
@@ -109,8 +109,8 @@ export default function Privacy() {
             </p>
             <p>
               You may request deletion of your account and all associated data at any time by emailing{" "}
-              <a href="mailto:diego@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
-                diego@testcraftai.com
+              <a href="mailto:soporte@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
+                soporte@testcraftai.com
               </a>.
             </p>
           </Section>
@@ -118,16 +118,16 @@ export default function Privacy() {
           <Section title="6. Your Rights">
             <p>Depending on your jurisdiction, you may have the right to:</p>
             <ul className="mt-3 space-y-1.5">
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Access the personal data we hold about you.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Correct inaccurate data.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Request deletion of your data.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Object to processing of your data.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Export your data in a portable format.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Access the personal data we hold about you.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Correct inaccurate data.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Request deletion of your data.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Object to processing of your data.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Export your data in a portable format.</li>
             </ul>
             <p className="mt-3">
               To exercise any of these rights, contact us at{" "}
-              <a href="mailto:diego@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
-                diego@testcraftai.com
+              <a href="mailto:soporte@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
+                soporte@testcraftai.com
               </a>.
             </p>
           </Section>
@@ -159,10 +159,10 @@ export default function Privacy() {
           <Section title="10. Contact">
             <p>
               For privacy-related questions or requests, contact Diego Britez at{" "}
-              <a href="mailto:diego@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
-                diego@testcraftai.com
+              <a href="mailto:soporte@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
+                soporte@testcraftai.com
               </a>
-              {" "}· QualityBridge · Buenos Aires, Argentina.
+              {" "}- QualityBridge - Buenos Aires, Argentina.
             </p>
           </Section>
         </div>
@@ -189,7 +189,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Item({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <li className="flex gap-2">
-      <span className="text-sky-400 shrink-0">·</span>
+      <span className="text-sky-400 shrink-0">-</span>
       <span>
         <strong className="text-slate-200">{label}:</strong>{" "}{children}
       </span>

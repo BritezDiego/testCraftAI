@@ -49,17 +49,17 @@ export default function Refund() {
             </p>
             <p>
               To request a refund within this period, contact us at{" "}
-              <a href="mailto:diego@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
-                diego@testcraftai.com
+              <a href="mailto:soporte@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
+                soporte@testcraftai.com
               </a>{" "}
               with your account email and the reason for your request (optional). We will process the
-              refund within 5–10 business days, depending on your payment method.
+              refund within 5 to 10 business days, depending on your payment method.
             </p>
             <div className="mt-4 rounded-xl bg-sky-500/10 border border-sky-500/20 p-4">
               <p className="text-sky-300 font-medium mb-1">Eligible for refund</p>
               <ul className="space-y-1 text-slate-400">
-                <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span>First-time purchase of a Pro or Team plan.</li>
-                <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span>Request submitted within 14 days of the charge date.</li>
+                <li className="flex gap-2"><span className="text-sky-400 shrink-0">-</span>First-time purchase of a Pro or Team plan.</li>
+                <li className="flex gap-2"><span className="text-sky-400 shrink-0">-</span>Request submitted within 14 days of the charge date.</li>
               </ul>
             </div>
           </Section>
@@ -74,9 +74,9 @@ export default function Refund() {
               from your account dashboard. Upon cancellation:
             </p>
             <ul className="mt-3 space-y-1.5">
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Your subscription remains active until the end of the current billing period.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>You will not be charged again after cancellation.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Access to paid features continues until the period ends.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Your subscription remains active until the end of the current billing period.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>You will not be charged again after cancellation.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Access to paid features continues until the period ends.</li>
             </ul>
           </Section>
 
@@ -107,9 +107,9 @@ export default function Refund() {
           <Section title="7. How to Request a Refund">
             <ol className="mt-3 space-y-2 list-none">
               {[
-                "Send an email to diego@testcraftai.com with subject line: \"Refund Request — [your email]\".",
+                'Send an email to soporte@testcraftai.com with subject: "Refund Request -- [your email]".',
                 "Include your account email address and the date of the charge.",
-                "We will respond within 2 business days and process approved refunds within 5–10 business days.",
+                "We will respond within 2 business days and process approved refunds within 5 to 10 business days.",
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
                   <span className="text-sky-400 font-semibold shrink-0">{i + 1}.</span>
@@ -122,10 +122,10 @@ export default function Refund() {
           <Section title="8. Contact">
             <p>
               Questions about this policy? Reach us at{" "}
-              <a href="mailto:diego@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
-                diego@testcraftai.com
+              <a href="mailto:soporte@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
+                soporte@testcraftai.com
               </a>
-              {" "}· QualityBridge · Buenos Aires, Argentina.
+              {" "}- QualityBridge - Buenos Aires, Argentina.
             </p>
           </Section>
         </div>

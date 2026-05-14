@@ -35,8 +35,8 @@ export default function Terms() {
             <p>
               TestCraft AI is a SaaS platform that generates professional test cases from user stories
               using artificial intelligence. The Service is available at{" "}
-              <a href="https://test-craft-ai.vercel.app" className="text-sky-400 hover:text-sky-300 transition-colors">
-                test-craft-ai.vercel.app
+              <a href="https://test-craft-ai-mu.vercel.app" className="text-sky-400 hover:text-sky-300 transition-colors">
+                test-craft-ai-mu.vercel.app
               </a>.
             </p>
           </Section>
@@ -50,13 +50,20 @@ export default function Terms() {
           </Section>
 
           <Section title="4. Subscriptions and Billing">
-            <p>
-              TestCraft AI offers the following plans:
-            </p>
+            <p>TestCraft AI offers the following plans:</p>
             <ul className="mt-3 space-y-1.5 list-none">
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span><span><strong className="text-slate-200">Free</strong> — $0/month, 10 generations per month.</span></li>
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span><span><strong className="text-slate-200">Pro</strong> — $19/month, 200 generations per month.</span></li>
-              <li className="flex gap-2"><span className="text-sky-400 shrink-0">·</span><span><strong className="text-slate-200">Team</strong> — $79/month, 1000 generations per month.</span></li>
+              <li className="flex gap-2">
+                <span className="text-sky-400 shrink-0">-</span>
+                <span><strong className="text-slate-200">Free</strong> -- $0/month, 10 generations per month.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-sky-400 shrink-0">-</span>
+                <span><strong className="text-slate-200">Pro</strong> -- $19/month, 200 generations per month.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-sky-400 shrink-0">-</span>
+                <span><strong className="text-slate-200">Team</strong> -- $79/month, 1000 generations per month.</span>
+              </li>
             </ul>
             <p className="mt-3">
               Paid subscriptions are billed monthly. Payments are processed by Paddle, which acts as the
@@ -68,11 +75,11 @@ export default function Terms() {
           <Section title="5. Acceptable Use">
             <p>You agree not to:</p>
             <ul className="mt-3 space-y-1.5">
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Use the Service for any unlawful purpose.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Attempt to reverse-engineer or access the Service's underlying AI models.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Resell or sublicense access to the Service without written authorization.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Use automated tools to abuse credit limits or circumvent rate limits.</li>
-              <li className="flex gap-2"><span className="text-slate-500 shrink-0">—</span>Transmit content that is harmful, offensive, or violates third-party rights.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Use the Service for any unlawful purpose.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Attempt to reverse-engineer or access the Service's underlying AI models.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Resell or sublicense access to the Service without written authorization.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Use automated tools to abuse credit limits or circumvent rate limits.</li>
+              <li className="flex gap-2"><span className="text-slate-500 shrink-0">-</span>Transmit content that is harmful, offensive, or violates third-party rights.</li>
             </ul>
           </Section>
 
@@ -126,8 +133,8 @@ export default function Terms() {
           <Section title="12. Contact">
             <p>
               For questions about these Terms, contact us at{" "}
-              <a href="mailto:diego@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
-                diego@testcraftai.com
+              <a href="mailto:soporte@testcraftai.com" className="text-sky-400 hover:text-sky-300 transition-colors">
+                soporte@testcraftai.com
               </a>.
             </p>
           </Section>

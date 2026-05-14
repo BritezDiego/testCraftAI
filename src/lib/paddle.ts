@@ -33,7 +33,9 @@ export function openCheckout(
       displayMode: "overlay",
       theme: "dark",
       locale: "en",
-      successUrl: `${window.location.origin}/dashboard?payment=success&plan=${plan}`,
+    },
+    successCallback: () => {
+      window.location.href = `/dashboard?payment=success&plan=${plan}`;
     },
   });
 }

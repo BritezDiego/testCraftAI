@@ -7,6 +7,7 @@ import CreditsBadge from "../components/CreditsBadge";
 import SubscriptionBanner from "../components/SubscriptionBanner";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { redirectToCheckout, redirectToCustomerPortal } from "../lib/lemonsqueezy";
+import OnboardingModal, { useOnboarding } from "../components/OnboardingModal";
 import type { Generation } from "../lib/types";
 
 function getGreeting(): string {
@@ -27,7 +28,8 @@ export default function Dashboard() {
   const { fetchRecent } = useGenerations(profile?.id);
   const [recent, setRecent] = useState<Generation[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
-  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [upgradeLoading, setUpgradeLoading] = useState<"pro" | "team" | null>(null);
+  const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -72,8 +74,14 @@ export default function Dashboard() {
 
   function handleUpgrade() {
     if (!profile) return;
-    setUpgradeLoading(true);
+    setUpgradeLoading("pro");
     redirectToCheckout("pro", { id: profile.id, email: profile.email });
+  }
+
+  function handleUpgradeTeam() {
+    if (!profile) return;
+    setUpgradeLoading("team");
+    redirectToCheckout("team", { id: profile.id, email: profile.email });
   }
 
   function handleManage() {
@@ -82,6 +90,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-900">
+      {showOnboarding && <OnboardingModal onClose={dismissOnboarding} />}
+
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl max-w-sm ${
@@ -199,21 +209,42 @@ export default function Dashboard() {
           <div className="space-y-4">
             <CreditsBadge profile={profile} />
 
-            {/* Free upgrade banner */}
+            {/* Free upgrade banners */}
             {profile?.plan === "free" && (
-              <div className="rounded-xl bg-gradient-to-br from-sky-900/40 to-violet-900/40 border border-sky-500/30 p-4">
-                <h3 className="font-semibold text-slate-100 text-sm mb-1.5">Upgrade a Pro</h3>
-                <p className="text-xs text-slate-400 mb-3">
-                  200 generaciones/mes, todos los contextos, historial ilimitado.
-                </p>
-                <button
-                  onClick={handleUpgrade}
-                  disabled={upgradeLoading}
-                  className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold transition-all disabled:opacity-50"
-                >
-                  {upgradeLoading && <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-                  Upgrade a Pro — $19/mes
-                </button>
+              <div className="rounded-xl bg-gradient-to-br from-sky-900/40 to-violet-900/40 border border-sky-500/30 p-4 space-y-3">
+                <h3 className="font-semibold text-slate-100 text-sm">Upgrade tu plan</h3>
+
+                {/* Pro */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span className="font-medium text-slate-200">Pro</span>
+                    <span>200 gen/mes · $19/mes</span>
+                  </div>
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={upgradeLoading !== null}
+                    className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold transition-all disabled:opacity-50"
+                  >
+                    {upgradeLoading === "pro" && <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+                    Upgrade a Pro — $19/mes
+                  </button>
+                </div>
+
+                {/* Team */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span className="font-medium text-slate-200">Team</span>
+                    <span>1000 gen/mes · hasta 5 usuarios · $79/mes</span>
+                  </div>
+                  <button
+                    onClick={handleUpgradeTeam}
+                    disabled={upgradeLoading !== null}
+                    className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-all disabled:opacity-50"
+                  >
+                    {upgradeLoading === "team" && <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+                    Upgrade a Team — $79/mes
+                  </button>
+                </div>
               </div>
             )}
 

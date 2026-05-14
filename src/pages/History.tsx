@@ -1,17 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Search, Filter, Heart, Trash2, ArrowRight, History as HistoryIcon } from "lucide-react";
+import {
+  Search, Heart, Trash2, ArrowRight, History as HistoryIcon,
+  Plus, FileCode, List, CheckSquare, ChevronDown,
+} from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { useGenerations } from "../hooks/useGenerations";
+import { useGenerations, type SortOrder, type DateRange } from "../hooks/useGenerations";
 import LoadingSpinner from "../components/LoadingSpinner";
-import type { OutputFormat } from "../lib/types";
-import { Plus } from "lucide-react";
+import { CONTEXT_OPTIONS } from "../lib/constants";
+import type { OutputFormat, AppContext } from "../lib/types";
 
 const FORMAT_COLORS: Record<string, string> = {
-  gherkin: "bg-sky-500/20 text-sky-300",
-  steps: "bg-violet-500/20 text-violet-300",
-  checklist: "bg-emerald-500/20 text-emerald-300",
+  gherkin: "bg-sky-500/20 text-sky-300 border-sky-500/30",
+  steps: "bg-violet-500/20 text-violet-300 border-violet-500/30",
+  checklist: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
 };
+
+const FORMAT_OPTS: { value: OutputFormat | ""; label: string; icon?: React.ElementType }[] = [
+  { value: "", label: "Todos" },
+  { value: "gherkin", label: "Gherkin", icon: FileCode },
+  { value: "steps", label: "Steps", icon: List },
+  { value: "checklist", label: "Checklist", icon: CheckSquare },
+];
+
+const DATE_OPTS: { value: DateRange | ""; label: string }[] = [
+  { value: "", label: "Todo el tiempo" },
+  { value: "month", label: "Último mes" },
+  { value: "3months", label: "Últimos 3 meses" },
+];
+
+const SORT_OPTS: { value: SortOrder; label: string }[] = [
+  { value: "desc", label: "Más recientes primero" },
+  { value: "asc", label: "Más antiguos primero" },
+  { value: "alpha", label: "Alfabético" },
+];
 
 export default function History() {
   const { profile } = useAuth();
@@ -19,7 +41,10 @@ export default function History() {
 
   const [search, setSearch] = useState("");
   const [formatFilter, setFormatFilter] = useState<OutputFormat | "">("");
+  const [contextFilter, setContextFilter] = useState<AppContext | "">("");
   const [favOnly, setFavOnly] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [dateRange, setDateRange] = useState<DateRange | "">("");
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,16 +52,38 @@ export default function History() {
       fetchGenerations({
         search: search || undefined,
         format: formatFilter || undefined,
+        context: contextFilter || undefined,
         favoritesOnly: favOnly || undefined,
+        sortOrder,
+        dateRange: dateRange || undefined,
       });
     }
-  }, [profile?.id, search, formatFilter, favOnly, fetchGenerations]);
+  }, [profile?.id, search, formatFilter, contextFilter, favOnly, sortOrder, dateRange, fetchGenerations]);
 
   async function handleDelete(id: string) {
     setDeleting(id);
     await deleteGeneration(id);
     setDeleting(null);
   }
+
+  // Stats from current list
+  const stats = useMemo(() => {
+    const total = generations.length;
+    const estimatedTests = total * 10;
+    const formatCounts = generations.reduce<Record<string, number>>((acc, g) => {
+      acc[g.output_format] = (acc[g.output_format] ?? 0) + 1;
+      return acc;
+    }, {});
+    const contextCounts = generations.reduce<Record<string, number>>((acc, g) => {
+      acc[g.context] = (acc[g.context] ?? 0) + 1;
+      return acc;
+    }, {});
+    const topFormat = Object.entries(formatCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+    const topContext = Object.entries(contextCounts).sort((a, b) => b[1] - a[1])[0]?.[0]?.replace("_", " ") ?? "—";
+    return { total, estimatedTests, topFormat, topContext };
+  }, [generations]);
+
+  const hasFilters = !!(search || formatFilter || contextFilter || favOnly || dateRange);
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -47,6 +94,7 @@ export default function History() {
             <h1 className="text-2xl font-bold text-slate-100">Historial</h1>
             <p className="text-sm text-slate-400 mt-1">
               {generations.length} generacion{generations.length !== 1 ? "es" : ""}
+              {hasFilters && " · filtrado"}
             </p>
           </div>
           <Link
@@ -58,43 +106,111 @@ export default function History() {
           </Link>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
+        {/* Stats bar */}
+        {generations.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {[
+              { label: "Generaciones", value: stats.total },
+              { label: "Test cases est.", value: stats.estimatedTests.toLocaleString() },
+              { label: "Formato más usado", value: stats.topFormat },
+              { label: "Contexto más usado", value: stats.topContext },
+            ].map((s) => (
+              <div key={s.label} className="rounded-xl bg-slate-800 border border-slate-700 px-4 py-3">
+                <p className="text-xs text-slate-500 mb-1">{s.label}</p>
+                <p className="text-lg font-bold text-slate-100 capitalize">{s.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="mb-3">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por user story..."
+              placeholder="Buscar en user stories y test cases..."
               className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-sm placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-all"
             />
           </div>
-          <div className="flex gap-2">
-            <div className="relative">
-              <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <select
-                value={formatFilter}
-                onChange={(e) => setFormatFilter(e.target.value as OutputFormat | "")}
-                className="pl-8 pr-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-sm focus:outline-none focus:border-sky-500 transition-all"
+        </div>
+
+        {/* Filters row */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {/* Format toggle buttons */}
+          <div className="flex gap-1 p-1 rounded-xl bg-slate-800 border border-slate-700">
+            {FORMAT_OPTS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setFormatFilter(opt.value as OutputFormat | "")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  formatFilter === opt.value
+                    ? "bg-sky-500/20 text-sky-300 border border-sky-500/40"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
               >
-                <option value="">Todos los formatos</option>
-                <option value="gherkin">Gherkin</option>
-                <option value="steps">Steps</option>
-                <option value="checklist">Checklist</option>
-              </select>
-            </div>
-            <button
-              onClick={() => setFavOnly((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                favOnly
-                  ? "bg-red-500/10 border-red-500/40 text-red-400"
-                  : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
-              }`}
+                {opt.icon && <opt.icon className="h-3.5 w-3.5" />}
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Context select */}
+          <div className="relative">
+            <select
+              value={contextFilter}
+              onChange={(e) => setContextFilter(e.target.value as AppContext | "")}
+              className="pl-3 pr-7 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs focus:outline-none focus:border-sky-500 transition-all appearance-none"
             >
-              <Heart className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`} />
-              Favoritos
-            </button>
+              <option value="">Todos los contextos</option>
+              {CONTEXT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
+          </div>
+
+          {/* Date range */}
+          <div className="relative">
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value as DateRange | "")}
+              className="pl-3 pr-7 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs focus:outline-none focus:border-sky-500 transition-all appearance-none"
+            >
+              {DATE_OPTS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
+          </div>
+
+          {/* Favorites toggle */}
+          <button
+            onClick={() => setFavOnly((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
+              favOnly
+                ? "bg-red-500/10 border-red-500/40 text-red-400"
+                : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+            }`}
+          >
+            <Heart className={`h-3.5 w-3.5 ${favOnly ? "fill-current" : ""}`} />
+            Favoritos
+          </button>
+
+          {/* Sort */}
+          <div className="relative ml-auto">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+              className="pl-3 pr-7 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs focus:outline-none focus:border-sky-500 transition-all appearance-none"
+            >
+              {SORT_OPTS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
           </div>
         </div>
 
@@ -105,9 +221,9 @@ export default function History() {
           <div className="rounded-xl bg-slate-800 border border-slate-700 p-12 text-center">
             <HistoryIcon className="h-10 w-10 text-slate-600 mx-auto mb-3" />
             <p className="text-slate-400 font-medium mb-1">
-              {search || formatFilter || favOnly ? "Sin resultados para tu búsqueda" : "No hay generaciones todavía"}
+              {hasFilters ? "Sin resultados para tu búsqueda" : "No hay generaciones todavía"}
             </p>
-            {!search && !formatFilter && !favOnly && (
+            {!hasFilters && (
               <Link
                 to="/generate"
                 className="inline-block mt-4 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-medium transition-all"
@@ -130,10 +246,10 @@ export default function History() {
                         {gen.user_story}
                       </p>
                       <div className="flex items-center flex-wrap gap-2 mt-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${FORMAT_COLORS[gen.output_format] ?? "bg-slate-700 text-slate-400"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${FORMAT_COLORS[gen.output_format] ?? "bg-slate-700 text-slate-400 border-slate-600"}`}>
                           {gen.output_format}
                         </span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 capitalize">
                           {gen.context.replace("_", " ")}
                         </span>
                         <span className="text-xs text-slate-600">
@@ -142,12 +258,12 @@ export default function History() {
                           })}
                         </span>
                         {gen.is_favorite && <span className="text-xs text-red-400">♥</span>}
+                        {gen.is_public && <span className="text-xs text-sky-600">· público</span>}
                       </div>
                     </div>
                     <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-sky-400 shrink-0 mt-1 transition-colors" />
                   </div>
                 </Link>
-                {/* Actions */}
                 <div className="flex items-center gap-1 px-4 pb-3 border-t border-slate-700/50 pt-2">
                   <button
                     onClick={() => toggleFavorite(gen.id, gen.is_favorite)}

@@ -220,15 +220,22 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800 py-8 px-4">
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <FlaskConical className="h-4 w-4 text-sky-500" />
-            <span>TestCraft AI</span>
+        <div className="mx-auto max-w-6xl space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-500">
+            <div className="flex items-center gap-2">
+              <FlaskConical className="h-4 w-4 text-sky-500" />
+              <span>TestCraft AI</span>
+            </div>
+            <span>Creado por QualityBridge · Buenos Aires</span>
+            <div className="flex gap-4">
+              <Link to="/pricing" className="hover:text-slate-300 transition-colors">Precios</Link>
+              <Link to="/login" className="hover:text-slate-300 transition-colors">Login</Link>
+            </div>
           </div>
-          <span>Creado por QualityBridge · Buenos Aires</span>
-          <div className="flex gap-4">
-            <Link to="/pricing" className="hover:text-slate-300 transition-colors">Precios</Link>
-            <Link to="/login" className="hover:text-slate-300 transition-colors">Login</Link>
+          <div className="flex items-center justify-center gap-5 text-xs text-slate-600 border-t border-slate-800/60 pt-4">
+            <Link to="/terms" className="hover:text-slate-400 transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-slate-400 transition-colors">Privacy Policy</Link>
+            <Link to="/refund" className="hover:text-slate-400 transition-colors">Refund Policy</Link>
           </div>
         </div>
       </footer>

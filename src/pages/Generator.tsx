@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { Sparkles, FileCode, List, CheckSquare, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { Sparkles, FileCode, List, CheckSquare, AlertCircle, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../lib/supabase";
 import { TEMPLATES, FORMAT_OPTIONS, CONTEXT_OPTIONS } from "../lib/constants";
 import TestCaseOutput from "../components/TestCaseOutput";
 import PaywallModal from "../components/PaywallModal";
+import SaveTemplateModal from "../components/SaveTemplateModal";
 import { useGenerations } from "../hooks/useGenerations";
-import type { Generation, OutputFormat, AppContext } from "../lib/types";
+import { useCustomTemplates } from "../hooks/useCustomTemplates";
+import type { Generation, OutputFormat, AppContext, CustomTemplate } from "../lib/types";
 
 const FORMAT_ICONS: Record<OutputFormat, React.ElementType> = {
   gherkin: FileCode,
@@ -39,6 +42,11 @@ function SkeletonLoader() {
 export default function Generator() {
   const { user, profile, refreshProfile } = useAuth();
   const { toggleFavorite } = useGenerations(user?.id);
+  const { templates, fetchTemplates, createTemplate, deleteTemplate, canAddMore } = useCustomTemplates(
+    user?.id,
+    profile?.plan ?? "free"
+  );
+  const location = useLocation();
 
   const [userStory, setUserStory] = useState("");
   const [format, setFormat] = useState<OutputFormat>("gherkin");
@@ -49,9 +57,26 @@ export default function Generator() {
   const [result, setResult] = useState<Generation | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   const creditsLeft = creditsRemaining ?? Math.max(0, (profile?.credits_limit ?? 10) - (profile?.credits_used ?? 0));
   const hasCredits = creditsLeft > 0;
+
+  // Pre-fill from template navigated from /templates
+  useEffect(() => {
+    const state = location.state as { template?: CustomTemplate } | null;
+    if (state?.template) {
+      const t = state.template;
+      setUserStory(t.user_story);
+      setFormat(t.format);
+      setContext(t.context);
+      setIncludeEdgeCases(t.include_edge_cases);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (user?.id) fetchTemplates();
+  }, [user?.id, fetchTemplates]);
 
   async function handleGenerate() {
     if (!userStory.trim() || userStory.trim().length < 10) {
@@ -70,7 +95,6 @@ export default function Generator() {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-
       if (!token) throw new Error("No autenticado");
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
@@ -84,10 +108,7 @@ export default function Generator() {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Error al generar");
-      }
+      if (!response.ok) throw new Error(data.error ?? "Error al generar");
 
       setResult(data.generation as Generation);
       setCreditsRemaining(data.credits_remaining);
@@ -106,6 +127,27 @@ export default function Generator() {
     }
   }
 
+  function applyTemplate(t: { story: string; format?: OutputFormat; context?: AppContext; includeEdgeCases?: boolean }) {
+    setUserStory(t.story);
+    if (t.format) setFormat(t.format);
+    if (t.context) setContext(t.context);
+    if (t.includeEdgeCases !== undefined) setIncludeEdgeCases(t.includeEdgeCases);
+  }
+
+  async function handleDeleteTemplate(id: string) {
+    if (!window.confirm("¿Eliminar este template?")) return;
+    await deleteTemplate(id);
+  }
+
+  async function handleSaveTemplate(name: string) {
+    if (!canAddMore) {
+      setShowSaveModal(false);
+      setShowPaywall(true);
+      return;
+    }
+    await createTemplate({ name, user_story: userStory, format, context, include_edge_cases: includeEdgeCases });
+  }
+
   return (
     <div className="min-h-screen bg-slate-900">
       {showPaywall && (
@@ -114,6 +156,17 @@ export default function Generator() {
           onClose={() => setShowPaywall(false)}
         />
       )}
+      {showSaveModal && (
+        <SaveTemplateModal
+          userStory={userStory}
+          context={context}
+          format={format}
+          includeEdgeCases={includeEdgeCases}
+          onSave={handleSaveTemplate}
+          onClose={() => setShowSaveModal(false)}
+        />
+      )}
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-100">Generador de Test Cases</h1>
@@ -123,14 +176,14 @@ export default function Generator() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Input column */}
           <div className="space-y-4">
-            {/* Templates */}
+            {/* Predefined templates */}
             <div>
               <p className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Templates rápidos</p>
               <div className="flex flex-wrap gap-2">
                 {TEMPLATES.map((t) => (
                   <button
                     key={t.name}
-                    onClick={() => setUserStory(t.story)}
+                    onClick={() => applyTemplate({ story: t.story })}
                     className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 hover:border-sky-500/50 hover:text-sky-300 transition-all"
                   >
                     {t.name}
@@ -139,17 +192,42 @@ export default function Generator() {
               </div>
             </div>
 
+            {/* Custom templates */}
+            {templates.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-px flex-1 bg-slate-700" />
+                  <p className="text-xs text-slate-600 font-medium">Mis templates</p>
+                  <div className="h-px flex-1 bg-slate-700" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {templates.map((t) => (
+                    <div key={t.id} className="flex items-center gap-0 rounded-lg bg-slate-800 border border-slate-700 hover:border-violet-500/50 transition-all overflow-hidden">
+                      <button
+                        onClick={() => applyTemplate({ story: t.user_story, format: t.format, context: t.context, includeEdgeCases: t.include_edge_cases })}
+                        className="px-3 py-1 text-xs font-medium text-slate-300 hover:text-violet-300 transition-colors"
+                      >
+                        {t.name}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTemplate(t.id)}
+                        className="px-1.5 py-1 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Textarea */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                User Story
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">User Story</label>
               <textarea
                 value={userStory}
                 onChange={(e) => setUserStory(e.target.value)}
-                placeholder="Pegá tu user story acá...
-
-Ejemplo: As a user, I want to login with email and password so that I can access my dashboard"
+                placeholder={"Pegá tu user story acá...\n\nEjemplo: As a user, I want to login with email and password so that I can access my dashboard"}
                 className="w-full min-h-[200px] px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/30 resize-y transition-all leading-relaxed"
               />
               <p className="text-xs text-slate-600 mt-1 text-right">{userStory.length} caracteres</p>
@@ -190,9 +268,7 @@ Ejemplo: As a user, I want to login with email and password so that I can access
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-700 border border-slate-600 text-slate-200 text-sm focus:outline-none focus:border-sky-500 transition-all"
                 >
                   {CONTEXT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
               </div>
@@ -254,7 +330,6 @@ Ejemplo: As a user, I want to login with email and password so that I can access
               )}
             </button>
 
-            {/* Credits indicator */}
             <p className="text-center text-xs text-slate-500">
               {hasCredits ? (
                 <>
@@ -277,6 +352,7 @@ Ejemplo: As a user, I want to login with email and password so that I can access
               <TestCaseOutput
                 generation={result}
                 onToggleFavorite={handleToggleFavorite}
+                onSaveTemplate={() => setShowSaveModal(true)}
               />
             )}
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FlaskConical, LayoutDashboard, Zap, History, ChevronDown, LogOut, User, Menu, X } from "lucide-react";
+import { FlaskConical, LayoutDashboard, Zap, History, BookmarkPlus, ChevronDown, LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Navbar() {
@@ -15,6 +15,7 @@ export default function Navbar() {
         { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { to: "/generate", label: "Generar", icon: Zap },
         { to: "/history", label: "Historial", icon: History },
+        { to: "/templates", label: "Templates", icon: BookmarkPlus },
       ]
     : [];
 

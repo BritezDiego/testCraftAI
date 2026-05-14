@@ -10,6 +10,11 @@ export type AppContext =
   | "healthcare"
   | "general";
 
+export interface PricingFeature {
+  text: string;
+  comingSoon?: boolean;
+}
+
 export interface Profile {
   id: string;
   email: string;
@@ -39,7 +44,21 @@ export interface Generation {
   include_edge_cases: boolean;
   tokens_used: number;
   is_favorite: boolean;
+  is_public: boolean;
+  public_slug: string | null;
   created_at: string;
+}
+
+export interface CustomTemplate {
+  id: string;
+  user_id: string;
+  name: string;
+  user_story: string;
+  context: AppContext;
+  format: OutputFormat;
+  include_edge_cases: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface GenerateRequest {
@@ -61,7 +80,7 @@ export interface PricingPlan {
   period: string;
   description: string;
   credits: number;
-  features: string[];
+  features: PricingFeature[];
   highlighted: boolean;
   cta: string;
 }

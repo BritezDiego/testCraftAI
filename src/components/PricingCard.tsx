@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Zap, ExternalLink, Loader2 } from "lucide-react";
+import { Check, Clock, Zap, ExternalLink, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { PricingPlan } from "../lib/types";
 import { useAuth } from "../hooks/useAuth";
@@ -20,14 +20,11 @@ export default function PricingCard({ plan }: Props) {
 
   async function handleClick() {
     if (isCurrent) return;
-
     if (!user || !profile) {
       navigate(`/register?plan=${plan.id}`);
       return;
     }
-
     if (plan.id === "free") return;
-
     setLoading(true);
     redirectToCheckout(plan.id as "pro" | "team", { id: user.id, email: profile.email });
   }
@@ -40,7 +37,6 @@ export default function PricingCard({ plan }: Props) {
 
   const buttonLabel = () => {
     if (isCurrent) return "Plan actual";
-    if (!user) return plan.cta;
     if (loading) return "Redirigiendo...";
     return plan.cta;
   };
@@ -82,9 +78,21 @@ export default function PricingCard({ plan }: Props) {
 
       <ul className="space-y-2.5 flex-1">
         {plan.features.map((f) => (
-          <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
-            <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-            {f}
+          <li
+            key={f.text}
+            className={`flex items-start gap-2.5 text-sm ${f.comingSoon ? "text-slate-500" : "text-slate-300"}`}
+          >
+            {f.comingSoon ? (
+              <Clock className="h-4 w-4 text-slate-600 shrink-0 mt-0.5" />
+            ) : (
+              <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+            )}
+            <span className="flex-1">{f.text}</span>
+            {f.comingSoon && (
+              <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-semibold shrink-0 leading-none self-center">
+                SOON
+              </span>
+            )}
           </li>
         ))}
       </ul>

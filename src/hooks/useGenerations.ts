@@ -2,13 +2,25 @@ import { useCallback, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { Generation, OutputFormat, AppContext } from "../lib/types";
 
+export type SortOrder = "desc" | "asc" | "alpha";
+export type DateRange = "month" | "3months" | "all";
+
+export interface GenerationFilters {
+  format?: OutputFormat;
+  context?: AppContext;
+  favoritesOnly?: boolean;
+  search?: string;
+  sortOrder?: SortOrder;
+  dateRange?: DateRange;
+}
+
 export function useGenerations(userId: string | undefined) {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchGenerations = useCallback(
-    async (filters?: { format?: OutputFormat; context?: AppContext; favoritesOnly?: boolean; search?: string }) => {
+    async (filters?: GenerationFilters) => {
       if (!userId) return;
       setLoading(true);
       setError(null);
@@ -16,13 +28,34 @@ export function useGenerations(userId: string | undefined) {
         let query = supabase
           .from("generations")
           .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false });
+          .eq("user_id", userId);
 
+        if (filters?.search) {
+          query = query.or(
+            `user_story.ilike.%${filters.search}%,output_text.ilike.%${filters.search}%`
+          );
+        }
         if (filters?.format) query = query.eq("output_format", filters.format);
         if (filters?.context) query = query.eq("context", filters.context);
         if (filters?.favoritesOnly) query = query.eq("is_favorite", true);
-        if (filters?.search) query = query.ilike("user_story", `%${filters.search}%`);
+
+        if (filters?.dateRange === "month") {
+          const d = new Date();
+          d.setMonth(d.getMonth() - 1);
+          query = query.gte("created_at", d.toISOString());
+        } else if (filters?.dateRange === "3months") {
+          const d = new Date();
+          d.setMonth(d.getMonth() - 3);
+          query = query.gte("created_at", d.toISOString());
+        }
+
+        if (filters?.sortOrder === "asc") {
+          query = query.order("created_at", { ascending: true });
+        } else if (filters?.sortOrder === "alpha") {
+          query = query.order("user_story", { ascending: true });
+        } else {
+          query = query.order("created_at", { ascending: false });
+        }
 
         const { data, error: err } = await query;
         if (err) throw err;
@@ -62,17 +95,23 @@ export function useGenerations(userId: string | undefined) {
     setGenerations((prev) => prev.filter((g) => g.id !== id));
   }, []);
 
-  const getById = useCallback(
-    async (id: string): Promise<Generation | null> => {
-      const { data } = await supabase
-        .from("generations")
-        .select("*")
-        .eq("id", id)
-        .single();
-      return data as Generation | null;
-    },
-    []
-  );
+  const getById = useCallback(async (id: string): Promise<Generation | null> => {
+    const { data } = await supabase
+      .from("generations")
+      .select("*")
+      .eq("id", id)
+      .single();
+    return data as Generation | null;
+  }, []);
 
-  return { generations, loading, error, fetchGenerations, fetchRecent, toggleFavorite, deleteGeneration, getById };
+  return {
+    generations,
+    loading,
+    error,
+    fetchGenerations,
+    fetchRecent,
+    toggleFavorite,
+    deleteGeneration,
+    getById,
+  };
 }

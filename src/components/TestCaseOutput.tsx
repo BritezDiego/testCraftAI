@@ -1,19 +1,22 @@
 import { useState } from "react";
-import { Copy, Check, Heart, Clock } from "lucide-react";
+import { Copy, Check, Heart, Clock, BookmarkPlus } from "lucide-react";
 import type { Generation } from "../lib/types";
+import { useAuth } from "../hooks/useAuth";
 import ExportMenu from "./ExportMenu";
+import ShareButton from "./ShareButton";
+import JiraButton from "./JiraButton";
 
 interface Props {
   generation: Generation;
   onToggleFavorite?: (id: string, current: boolean) => void;
+  onSaveTemplate?: () => void;
+  readOnly?: boolean;
 }
 
 function highlightGherkin(text: string): string {
   return text
-    // Strings and tags first — on clean text, before any <span> class attrs exist
     .replace(/"([^"]+)"/g, '"<span class="gherkin-string">$1</span>"')
     .replace(/(@\w[\w-]*)(\s|$)/g, '<span class="gherkin-tag">$1</span>$2')
-    // Line-level keywords after — their class attrs won't be touched by string regex
     .replace(/^(Feature:|Background:|Rule:)(.*)$/gm, '<span class="gherkin-feature">$1$2</span>')
     .replace(/^(\s*)(Scenario:|Scenario Outline:|Examples:)(.*)$/gm, '$1<span class="gherkin-scenario">$2$3</span>')
     .replace(/^(\s*)(Given |When |Then |And |But )(.*)$/gm, '$1<span class="gherkin-keyword">$2</span>$3')
@@ -45,22 +48,28 @@ function applyHighlight(text: string, format: string): string {
   return text;
 }
 
-export default function TestCaseOutput({ generation, onToggleFavorite }: Props) {
+export default function TestCaseOutput({ generation, onToggleFavorite, onSaveTemplate, readOnly = false }: Props) {
+  const { profile } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [localGeneration, setLocalGeneration] = useState(generation);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(generation.output_text);
+    await navigator.clipboard.writeText(localGeneration.output_text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleShareUpdate(patch: Partial<Generation>) {
+    setLocalGeneration((prev) => ({ ...prev, ...patch }));
   }
 
   const formatLabel = {
     gherkin: "Gherkin",
     steps: "Steps",
     checklist: "Checklist",
-  }[generation.output_format] ?? generation.output_format;
+  }[localGeneration.output_format] ?? localGeneration.output_format;
 
-  const highlighted = applyHighlight(generation.output_text, generation.output_format);
+  const highlighted = applyHighlight(localGeneration.output_text, localGeneration.output_format);
 
   return (
     <div className="rounded-xl bg-slate-800 border border-slate-700 overflow-hidden flex flex-col">
@@ -72,22 +81,32 @@ export default function TestCaseOutput({ generation, onToggleFavorite }: Props) 
           </span>
           <div className="flex items-center gap-1 text-xs text-slate-500">
             <Clock className="h-3 w-3" />
-            {new Date(generation.created_at).toLocaleDateString("es-AR", {
+            {new Date(localGeneration.created_at).toLocaleDateString("es-AR", {
               day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
             })}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {onToggleFavorite && (
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {!readOnly && onToggleFavorite && (
             <button
-              onClick={() => onToggleFavorite(generation.id, generation.is_favorite)}
+              onClick={() => onToggleFavorite(localGeneration.id, localGeneration.is_favorite)}
               className={`p-1.5 rounded-lg transition-colors ${
-                generation.is_favorite
+                localGeneration.is_favorite
                   ? "text-red-400 bg-red-500/10 hover:bg-red-500/20"
                   : "text-slate-500 hover:text-red-400 hover:bg-red-500/10"
               }`}
             >
-              <Heart className={`h-4 w-4 ${generation.is_favorite ? "fill-current" : ""}`} />
+              <Heart className={`h-4 w-4 ${localGeneration.is_favorite ? "fill-current" : ""}`} />
+            </button>
+          )}
+          {!readOnly && onSaveTemplate && (
+            <button
+              onClick={onSaveTemplate}
+              title="Guardar como template"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm text-slate-200 transition-colors"
+            >
+              <BookmarkPlus className="h-4 w-4" />
+              Template
             </button>
           )}
           <button
@@ -97,7 +116,18 @@ export default function TestCaseOutput({ generation, onToggleFavorite }: Props) 
             {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
             {copied ? "Copiado!" : "Copiar"}
           </button>
-          <ExportMenu generation={generation} />
+          {!readOnly && (
+            <>
+              <ShareButton
+                generation={localGeneration}
+                plan={profile?.plan}
+                onUpdate={handleShareUpdate}
+              />
+              <JiraButton generation={localGeneration} plan={profile?.plan} />
+              <ExportMenu generation={localGeneration} />
+            </>
+          )}
+          {readOnly && <ExportMenu generation={localGeneration} />}
         </div>
       </div>
 
@@ -111,9 +141,12 @@ export default function TestCaseOutput({ generation, onToggleFavorite }: Props) 
       </div>
 
       {/* Footer */}
-      {generation.tokens_used > 0 && (
+      {localGeneration.tokens_used > 0 && (
         <div className="px-4 py-2 border-t border-slate-700/50 text-xs text-slate-600">
-          {generation.tokens_used.toLocaleString()} tokens usados
+          {localGeneration.tokens_used.toLocaleString()} tokens usados
+          {localGeneration.is_public && (
+            <span className="ml-3 text-sky-600">· link público activo</span>
+          )}
         </div>
       )}
     </div>

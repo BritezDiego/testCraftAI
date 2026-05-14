@@ -3,7 +3,7 @@ import { Check, Clock, Zap, ExternalLink, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { PricingPlan } from "../lib/types";
 import { useAuth } from "../hooks/useAuth";
-import { redirectToCheckout, redirectToCustomerPortal } from "../lib/lemonsqueezy";
+import { openCheckout, openCustomerPortal } from "../lib/paddle";
 
 interface Props {
   plan: PricingPlan;
@@ -26,12 +26,12 @@ export default function PricingCard({ plan }: Props) {
     }
     if (plan.id === "free") return;
     setLoading(true);
-    redirectToCheckout(plan.id as "pro" | "team", { id: user.id, email: profile.email });
+    openCheckout(plan.id as "pro" | "team", { id: user.id, email: profile.email });
   }
 
   function handleManage() {
-    if (profile?.ls_customer_id) {
-      redirectToCustomerPortal(profile.ls_customer_id);
+    if (profile?.paddle_subscription_id) {
+      openCustomerPortal(profile.paddle_subscription_id);
     }
   }
 
@@ -112,7 +112,7 @@ export default function PricingCard({ plan }: Props) {
         {buttonLabel()}
       </button>
 
-      {isCurrent && isPaid && profile?.ls_customer_id && (
+      {isCurrent && isPaid && profile?.paddle_subscription_id && (
         <button
           onClick={handleManage}
           className="w-full flex items-center justify-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"

@@ -1,7 +1,7 @@
 import { X, Zap, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { redirectToCheckout } from "../lib/lemonsqueezy";
+import { openCheckout } from "../lib/paddle";
 
 interface Props {
   creditsUsed: number;
@@ -15,7 +15,7 @@ export default function PaywallModal({ creditsUsed, onClose }: Props) {
   function handleUpgrade(plan: "pro" | "team") {
     if (!user || !profile) return;
     setLoading(plan);
-    redirectToCheckout(plan, { id: user.id, email: profile.email });
+    openCheckout(plan, { id: user.id, email: profile.email });
   }
 
   return (

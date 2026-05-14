@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { initializePaddle } from "./lib/paddle";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
@@ -17,6 +19,8 @@ import Privacy from "./pages/Privacy";
 import Refund from "./pages/Refund";
 
 export default function App() {
+  useEffect(() => { initializePaddle(); }, []);
+
   return (
     <BrowserRouter>
       <Routes>

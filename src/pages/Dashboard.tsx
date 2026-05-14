@@ -6,7 +6,7 @@ import { useGenerations } from "../hooks/useGenerations";
 import CreditsBadge from "../components/CreditsBadge";
 import SubscriptionBanner from "../components/SubscriptionBanner";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { redirectToCheckout, redirectToCustomerPortal } from "../lib/lemonsqueezy";
+import { openCheckout, openCustomerPortal } from "../lib/paddle";
 import OnboardingModal, { useOnboarding } from "../components/OnboardingModal";
 import type { Generation } from "../lib/types";
 
@@ -75,17 +75,17 @@ export default function Dashboard() {
   function handleUpgrade() {
     if (!profile) return;
     setUpgradeLoading("pro");
-    redirectToCheckout("pro", { id: profile.id, email: profile.email });
+    openCheckout("pro", { id: profile.id, email: profile.email });
   }
 
   function handleUpgradeTeam() {
     if (!profile) return;
     setUpgradeLoading("team");
-    redirectToCheckout("team", { id: profile.id, email: profile.email });
+    openCheckout("team", { id: profile.id, email: profile.email });
   }
 
   function handleManage() {
-    if (profile?.ls_customer_id) redirectToCustomerPortal(profile.ls_customer_id);
+    if (profile?.paddle_subscription_id) openCustomerPortal(profile.paddle_subscription_id);
   }
 
   return (
@@ -128,7 +128,7 @@ export default function Dashboard() {
         </div>
 
         {/* Subscription alerts */}
-        {profile && (profile.subscription_status === "cancelled" || profile.subscription_status === "past_due") && (
+        {profile && (profile.paddle_subscription_status === "canceled" || profile.paddle_subscription_status === "past_due") && (
           <div className="mb-6">
             <SubscriptionBanner profile={profile} />
           </div>
@@ -249,7 +249,7 @@ export default function Dashboard() {
             )}
 
             {/* Paid plan — manage subscription */}
-            {profile && profile.plan !== "free" && profile.ls_customer_id && (
+            {profile && profile.plan !== "free" && profile.paddle_subscription_id && (
               <div className="rounded-xl bg-slate-800 border border-slate-700 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-slate-200">Tu suscripción</h3>

@@ -1,16 +1,16 @@
 import { AlertTriangle, XCircle, ExternalLink } from "lucide-react";
 import type { Profile } from "../lib/types";
-import { redirectToCustomerPortal } from "../lib/lemonsqueezy";
+import { openCustomerPortal } from "../lib/paddle";
 
 interface Props {
   profile: Profile;
 }
 
 export default function SubscriptionBanner({ profile }: Props) {
-  const { subscription_status, current_period_end, ls_customer_id } = profile;
+  const { paddle_subscription_status, current_period_end, paddle_subscription_id } = profile;
 
   function handleManage() {
-    if (ls_customer_id) redirectToCustomerPortal(ls_customer_id);
+    if (paddle_subscription_id) openCustomerPortal(paddle_subscription_id);
   }
 
   const endDate = current_period_end
@@ -21,7 +21,7 @@ export default function SubscriptionBanner({ profile }: Props) {
       })
     : null;
 
-  if (subscription_status === "cancelled" && endDate) {
+  if (paddle_subscription_status === "canceled" && endDate) {
     return (
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex items-start gap-3">
         <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
@@ -31,7 +31,7 @@ export default function SubscriptionBanner({ profile }: Props) {
             Tenés acceso hasta el {endDate}.
           </p>
         </div>
-        {ls_customer_id && (
+        {paddle_subscription_id && (
           <button
             onClick={handleManage}
             className="flex items-center gap-1 text-xs text-amber-300 hover:text-amber-100 transition-colors shrink-0"
@@ -44,7 +44,7 @@ export default function SubscriptionBanner({ profile }: Props) {
     );
   }
 
-  if (subscription_status === "past_due") {
+  if (paddle_subscription_status === "past_due") {
     return (
       <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-start gap-3">
         <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
@@ -54,7 +54,7 @@ export default function SubscriptionBanner({ profile }: Props) {
             No pudimos cobrar tu suscripción. Actualizá tu medio de pago.
           </p>
         </div>
-        {ls_customer_id && (
+        {paddle_subscription_id && (
           <button
             onClick={handleManage}
             className="flex items-center gap-1 text-xs text-red-300 hover:text-red-100 transition-colors shrink-0"

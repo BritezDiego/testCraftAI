@@ -1,6 +1,6 @@
 export type Plan = "free" | "pro" | "team";
 export type OutputFormat = "gherkin" | "steps" | "checklist";
-export type SubscriptionStatus = "active" | "cancelled" | "past_due" | "paused" | "inactive";
+export type SubscriptionStatus = "active" | "canceled" | "past_due" | "paused" | "trialing" | "inactive";
 export type AppContext =
   | "web_app"
   | "mobile_app"
@@ -25,10 +25,9 @@ export interface Profile {
   credits_limit: number;
   credits_reset_at: string;
   stripe_customer_id: string | null;
-  ls_customer_id: string | null;
-  ls_subscription_id: string | null;
-  ls_variant_id: string | null;
-  subscription_status: SubscriptionStatus;
+  paddle_customer_id: string | null;
+  paddle_subscription_id: string | null;
+  paddle_subscription_status: SubscriptionStatus;
   current_period_end: string | null;
   created_at: string;
   updated_at: string;

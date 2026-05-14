@@ -11,7 +11,7 @@ interface Props {
 
 export default function PricingCard({ plan }: Props) {
   const navigate = useNavigate();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const currentPlan = profile?.plan ?? "free";
@@ -19,14 +19,14 @@ export default function PricingCard({ plan }: Props) {
   const isPaid = plan.id === "pro" || plan.id === "team";
 
   async function handleClick() {
-    if (authLoading || isCurrent) return;
-    if (!user || !profile) {
+    if (isCurrent) return;
+    if (!user) {
       navigate(`/register?plan=${plan.id}`);
       return;
     }
     if (plan.id === "free") return;
     setCheckoutLoading(true);
-    openCheckout(plan.id as "pro" | "team", { id: user.id, email: profile.email });
+    openCheckout(plan.id as "pro" | "team", { id: user.id, email: user.email! });
     setCheckoutLoading(false);
   }
 
@@ -38,7 +38,7 @@ export default function PricingCard({ plan }: Props) {
 
   const buttonLabel = () => {
     if (isCurrent) return "Plan actual";
-    if (authLoading || checkoutLoading) return "Cargando...";
+    if (checkoutLoading) return "Abriendo...";
     return plan.cta;
   };
 
@@ -100,7 +100,7 @@ export default function PricingCard({ plan }: Props) {
 
       <button
         onClick={handleClick}
-        disabled={isCurrent || authLoading || checkoutLoading}
+        disabled={isCurrent || checkoutLoading}
         className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
           isCurrent
             ? "bg-slate-700 text-slate-500 cursor-default"
@@ -109,7 +109,7 @@ export default function PricingCard({ plan }: Props) {
             : "bg-slate-700 hover:bg-slate-600 text-slate-200"
         } disabled:opacity-60`}
       >
-        {(authLoading || checkoutLoading) && <Loader2 className="h-4 w-4 animate-spin" />}
+        {checkoutLoading && <Loader2 className="h-4 w-4 animate-spin" />}
         {buttonLabel()}
       </button>
 
